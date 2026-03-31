@@ -1,0 +1,500 @@
+{
+  "name": "SS04 - Call Rail Inbound call to Create/Update opportunity + Contact + Notes",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "49916ca1-9613-4690-a766-3d9feeae05b4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        96,
+        -64
+      ],
+      "id": "488b91a8-9ac9-4763-a115-6e104014ba16",
+      "name": "Webhook",
+      "webhookId": "49916ca1-9613-4690-a766-3d9feeae05b4"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "contactId": "33nSTcZXOiFWxGnMXGkr",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.highLevel",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -64
+      ],
+      "id": "33d7a601-442d-45c3-b366-94b01e805552",
+      "name": "Get a contact",
+      "credentials": {
+        "highLevelOAuth2Api": {
+          "id": "UWBVANtwANqKghpA",
+          "name": "HighLevel account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.id }}/notes/ ",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer "
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "body",
+              "value": "This is the note content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        -160
+      ],
+      "id": "6e010c49-a781-498b-8829-c88ee246b470",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ccb68bbd-9c32-49dd-97b6-77d65b3b1454",
+              "leftValue": "={{ $json.matched }}",
+              "rightValue": "=matched",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        -160
+      ],
+      "id": "846dc7dd-2308-44a3-9e61-5b3525ffb74d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "contactId": "={{ $('Get a contact').item.json.id }}",
+        "updateFields": {
+          "email": "={{ $json.email }}",
+          "firstName": "={{ $json.firstNameLowerCase }}",
+          "lastName": "={{ $json.lastName }}",
+          "name": "={{ $json.fullNameLowerCase }}",
+          "phone": "={{ $json.phone }}",
+          "tags": "={{ $json.tags }}"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.highLevel",
+      "typeVersion": 2,
+      "position": [
+        768,
+        -160
+      ],
+      "id": "df838072-6aa0-4be5-9c86-f00510942eab",
+      "name": "Update a contact in ghl",
+      "credentials": {
+        "highLevelOAuth2Api": {
+          "id": "UWBVANtwANqKghpA",
+          "name": "HighLevel account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "opportunity",
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.highLevel",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        -160
+      ],
+      "id": "479c656f-6cb3-44e3-9e77-8e22c67b7b19",
+      "name": "Get many opportunities",
+      "credentials": {
+        "highLevelOAuth2Api": {
+          "id": "UWBVANtwANqKghpA",
+          "name": "HighLevel account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "26cd15cf-59cb-446f-8e5b-d8e67cd1e391",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "={{ $('Webhook').item.json.name }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        -64
+      ],
+      "id": "918664a5-73e3-4601-8ab6-b218da042064",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "resource": "opportunity",
+        "operation": "update",
+        "opportunityId": "={{ $json.opportunityId }}",
+        "updateFields": {
+          "assignedTo": "={{ $json.assignedTo }}",
+          "name": "={{ $json.name }}",
+          "pipelineId": "={{ $json.pipeline }}",
+          "stageId": "={{ $json.pipelineStageId }}",
+          "status": "={{ $json.status }}"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.highLevel",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        -288
+      ],
+      "id": "45589dd0-bab6-46ed-a524-a93b131deae6",
+      "name": "Update an opportunity",
+      "credentials": {
+        "highLevelOAuth2Api": {
+          "id": "UWBVANtwANqKghpA",
+          "name": "HighLevel account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "email": "={{ $('Get a contact').item.json.email }}",
+        "phone": "={{ $('Get a contact').item.json.phone }}",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.highLevel",
+      "typeVersion": 2,
+      "position": [
+        752,
+        160
+      ],
+      "id": "436d64dc-60d9-4905-bc5b-1031aa896c1e",
+      "name": "Create or update a contact",
+      "credentials": {
+        "highLevelOAuth2Api": {
+          "id": "UWBVANtwANqKghpA",
+          "name": "HighLevel account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.id }}/notes/ ",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer "
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "body",
+              "value": "This is the note content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        992,
+        192
+      ],
+      "id": "96c19249-d4fa-413c-abb4-05ae03dd90ea",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "resource": "opportunity",
+        "pipelineId": "tY0TmChJ272Z0qJgvJWP",
+        "contactId": "={{ $('Create or update a contact').item.json.id }}",
+        "name": "test",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.highLevel",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        192
+      ],
+      "id": "eb2de4f2-1b8a-4d1f-8cce-c625215c0d0f",
+      "name": "Create an opportunity1",
+      "credentials": {
+        "highLevelOAuth2Api": {
+          "id": "UWBVANtwANqKghpA",
+          "name": "HighLevel account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "opportunity",
+        "pipelineId": "=IzH8c48fKUd2hjRkArpN",
+        "contactId": "={{ $items(\"Update a contact in ghl\")[0].json[\"id\"] }}",
+        "name": "={{ $('Update a contact in ghl').all()[0]?.json?.createdBy?.sourceName || 'N/A' }}",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.highLevel",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        -64
+      ],
+      "id": "570834e2-1663-440e-a204-a3f9a30ab0db",
+      "name": "Create an opportunity",
+      "credentials": {
+        "highLevelOAuth2Api": {
+          "id": "UWBVANtwANqKghpA",
+          "name": "HighLevel account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 🔹 Get contact ID from \"Update a contact in ghl\" node\nconst targetId = $node[\"Update a contact in ghl\"].json.id;\n\n// 🔹 Get all opportunities from \"Get many opportunities\" node\nconst opportunities = $items(\"Get many opportunities\").map(item => item.json);\n\n// Initialize match variable\nlet matchedOpportunity = null;\n\n// Loop through all opportunities\nfor (const opp of opportunities) {\n  if (opp.contactId === targetId) {\n    matchedOpportunity = opp;\n    break;\n  }\n}\n\n// Build output\nif (matchedOpportunity) {\n  return [{\n    json: {\n      contactId: targetId,\n      opportunityId: matchedOpportunity.id,\n      name: matchedOpportunity.name || \"\",\n      pipeline: matchedOpportunity.pipelineId || \"\",\n      assignedTo: matchedOpportunity.assignedTo || \"\",\n      pipelineStageId: matchedOpportunity.pipelineStageId || \"\",\n      status: matchedOpportunity.status || \"\",\n      matched: true\n    }\n  }];\n} else {\n  return [{\n    json: {\n      contactId: targetId,\n      matched: false\n    }\n  }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        -160
+      ],
+      "id": "fb46cb1b-b7e7-444c-8c50-95d9c8c5cd9e",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "name": "First item",
+          "code": 1
+        }
+      },
+      {
+        "json": {
+          "name": "Second item",
+          "code": 2
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get a contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a contact": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Get many opportunities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a contact in ghl": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many opportunities": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Update a contact in ghl",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create or update a contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update an opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create an opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update a contact": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Create an opportunity1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c2114e62-a111-4227-9210-79bb7e3d8ca9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6c4c446d5304742a3c3b35610a91a9314f8fa6e78abf59256949d198dc0f9226"
+  },
+  "id": "3JsDBvh1nIk7Vueq",
+  "tags": []
+}
